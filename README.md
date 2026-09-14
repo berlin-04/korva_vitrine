@@ -41,8 +41,7 @@ VITE_VITRINE_API_TOKEN=korva_vitrine_secret_tk_8f94e2b719a64c83d95e01b7a63458c89
 ---
 
 ## 🚀 Utilisation avec Docker Compose
-
-### 1. Mode Production (Autonome)
+## 1. Mode Pction (Autonome)
 
 ```bash
 cd frontend/korva_vitrine
