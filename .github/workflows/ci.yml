@@ -23,7 +23,7 @@ jobs:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         with:
           args: >
-             -Dsonar.verbose=korva_vitrine
+             -Dsonar.projectKey=korva_vitrine
 
       - name: Vérification du Quality Gate
         uses: sonarsource/sonarqube-quality-gate-action@v1
