@@ -1,0 +1,164 @@
+name: CI/CD - korva_vitrine
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  sast:
+    name: SAST (SonarQube)
+    runs-on: self-hosted
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Analyse SonarQube
+        uses: sonarsource/sonarqube-scan-action@v3
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+      - name: Vérification du Quality Gate
+        uses: sonarsource/sonarqube-quality-gate-action@v1
+        continue-on-error: true
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  build:
+    name: Build
+    needs: sast
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tag }}
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Installation des dépendances
+        run: npm ci
+
+      - name: Build du frontend (Vite)
+        run: npm run build
+
+      - name: Définir le tag de l'image
+        id: meta
+        run: echo "tag=${{ secrets.DOCKERHUB_USERNAME }}/korva_vitrine:${{ github.sha }}" >> "$GITHUB_OUTPUT"
+
+      - name: Connexion à Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build & push de l'image Docker
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tag }}
+  sca:
+    name: SCA (Trivy)
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Connexion à Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Scan Trivy de l'image
+        uses: aquasecurity/trivy-action@0.24.0
+        continue-on-error: true
+        with:
+          image-ref: ${{ needs.build.outputs.image_tag }}
+          format: 'sarif'
+          output: 'trivy-report.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'
+
+      - name: Upload du rapport Trivy
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-report
+          path: trivy-report.sarif
+  deploy:
+    name: Déploiement
+    needs: sca
+    runs-on: self-hosted
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Connexion à Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Pull de la nouvelle image
+        run: docker pull ${{ needs.build.outputs.image_tag }}
+
+      - name: Déploiement avec Docker Compose
+        run: |
+          export IMAGE_TAG=${{ needs.build.outputs.image_tag }}
+          docker compose -f docker-compose.yml -f docker-compose.app.yml up -d
+
+      - name: Attente que le service soit prêt
+        run: sleep 15
+  dast:
+    name: DAST (OWASP ZAP)
+    needs: deploy
+    runs-on: self-hosted
+    steps:
+      - name: Scan ZAP Baseline
+        uses: zaproxy/action-baseline@v0.12.0
+        continue-on-error: true
+        with:
+          target: ${{ secrets.DEPLOY_URL }}
+          cmd_options: '-a'
+          artifact_name: 'zap-report'
+
+      - name: Upload du rapport ZAP
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-report
+          path: report_html.html
+  notify:
+    name: Envoi du rapport
+    needs: dast
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Téléchargement du rapport ZAP
+        uses: actions/download-artifact@v4
+        with:
+          name: zap-report
+          path: ./report
+
+      - name: Envoi par email
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_APP_PASSWORD }}
+          subject: "Rapport DAST - korva_vitrine - ${{ github.sha }}"
+          to: kristdjengue6@gmail.com
+          from: "CI/CD korva_vitrine"
+          body: "Le rapport du scan OWASP ZAP est joint à ce mail."
+          attachments: ./report/report_html.html
