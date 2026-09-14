@@ -82,7 +82,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Scan Trivy de l'image
-        uses: aquasecurity/trivy-action@0.24.0
+        uses: aquasecurity/trivy-action@0.35.0
         continue-on-error: true
         with:
           image-ref: ${{ needs.build.outputs.image_tag }}
