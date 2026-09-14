@@ -73,3 +73,4 @@ docker run -d --name korva-vitrine -p 8085:3000 korva-vitrine:latest
 docker build --target development -t korva-vitrine:dev .
 docker run -it --rm -p 5174:5174 -v $(pwd):/app -v /app/node_modules korva-vitrine:dev
 ```
+# test pipeline
