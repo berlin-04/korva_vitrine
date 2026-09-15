@@ -4,7 +4,7 @@ Ce dossier conprend la configuration Docker pour le projet **Korva Vitrine** (ap
 
 ---
 
-## 📁 Fichiers Docker & Infrastructure
+## 📁 chiers Docker & Infrastructure
 
 * **`Dockerfile`** : Multi-stage build standard du projet :
   * `development` : Serveur Vite HMR avec hot reload (`port 5174`).
