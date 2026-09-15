@@ -55,6 +55,7 @@ jobs:
       - name: Définir le tag de l'image
         id: meta
         run: echo "tag=${{ secrets.DOCKERHUB_USERNAME }}/korva_vitrine:${{ github.sha }}" >> "$GITHUB_OUTPUT"
+
       - name: Vérifier le tag
           run: |
             echo "TAG = ${{ steps.meta.outputs.tag }}"
