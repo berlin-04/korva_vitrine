@@ -23,7 +23,7 @@ jobs:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         with:
           args: >
-             -Dsonar.projectKey=korva_vitrine
+            -Dsonar.projectKey=korva_vitrine
 
       - name: Vérification du Quality Gate
         uses: sonarsource/sonarqube-quality-gate-action@v1
@@ -31,6 +31,7 @@ jobs:
         timeout-minutes: 5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -57,8 +58,7 @@ jobs:
         run: echo "tag=${{ secrets.DOCKERHUB_USERNAME }}/korva_vitrine:${{ github.sha }}" >> "$GITHUB_OUTPUT"
 
       - name: Vérifier le tag
-          run: |
-            echo "TAG = ${{ steps.meta.outputs.tag }}"
+        run: echo "TAG = ${{ steps.meta.outputs.tag }}"
 
       - name: Connexion à Docker Hub
         uses: docker/login-action@v3
@@ -73,19 +73,20 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tag }}
+
   sca:
     name: SCA (Trivy)
     runs-on: ubuntu-latest
-    needs: build 
+    needs: build
     steps:
       - name: Connexion à Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Vérifier le tag de l'image
-        run: |
-         echo "IMAGE_TAG = ${{ needs.build.outputs.image_tag }}"
+        run: echo "IMAGE_TAG = ${{ needs.build.outputs.image_tag }}"
 
       - name: Scan Trivy de l'image
         uses: aquasecurity/trivy-action@0.35.0
@@ -104,6 +105,7 @@ jobs:
         with:
           name: trivy-report
           path: trivy-report.sarif
+
   deploy:
     name: Déploiement
     needs: sca
@@ -128,6 +130,7 @@ jobs:
 
       - name: Attente que le service soit prêt
         run: sleep 15
+
   dast:
     name: DAST (OWASP ZAP)
     needs: deploy
@@ -147,6 +150,7 @@ jobs:
         with:
           name: zap-report
           path: report_html.html
+
   notify:
     name: Envoi du rapport
     needs: dast
