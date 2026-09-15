@@ -86,7 +86,7 @@ jobs:
         continue-on-error: true
         with:
           scan-type: 'image'
-          scan-ref: ${{ needs.build.outputs.image_tag }}
+          image-ref: ${{ needs.build.outputs.image_tag }}
           format: 'sarif'
           output: 'trivy-report.sarif'
           severity: 'CRITICAL,HIGH'
