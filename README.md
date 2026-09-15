@@ -1,6 +1,6 @@
 # Korva Vitrine — Docker & Déploiement
 
-Ce dossier contient la configuration Docker pour le projet **Korva Vitrine** (application Vue 3 / Vite), alignée sur les standards du projet ComptaLib.
+Ce dossier conprend la configuration Docker pour le projet **Korva Vitrine** (application Vue 3 / Vite), alignée sur les standards du projet ComptaLib.
 
 ---
 
