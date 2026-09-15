@@ -72,6 +72,7 @@ jobs:
   sca:
     name: SCA (Trivy)
     runs-on: ubuntu-latest
+    needs: build 
     steps:
       - name: Connexion à Docker Hub
         uses: docker/login-action@v3
