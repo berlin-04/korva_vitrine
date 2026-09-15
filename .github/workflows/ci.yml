@@ -80,7 +80,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Vérifier le tag de l'image
-       run: |
+        run: |
          echo "IMAGE_TAG = ${{ needs.build.outputs.image_tag }}"
 
       - name: Scan Trivy de l'image
