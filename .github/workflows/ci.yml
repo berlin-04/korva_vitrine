@@ -33,7 +33,6 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
   build:
     name: Build
-    needs: sast
     runs-on: ubuntu-latest
     outputs:
       image_tag: ${{ steps.meta.outputs.tag }}
@@ -72,7 +71,6 @@ jobs:
           tags: ${{ steps.meta.outputs.tag }}
   sca:
     name: SCA (Trivy)
-    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Connexion à Docker Hub
