@@ -1,17 +1,7 @@
-FROM node:20-alpine AS base
+FROM node:20-alpine AS build
 WORKDIR /app
-RUN apk add --no-cache libc6-compat
 COPY package*.json ./
-RUN npm ci || npm install
-
-FROM base AS development
-COPY . .
-EXPOSE 5174
-HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-    CMD node -e "fetch('http://127.0.0.1:5174').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5174"]
-
-FROM base AS build
+RUN npm ci
 COPY . .
 RUN npm run build
 

@@ -79,10 +79,6 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Vérifier le tag de l'image
-        run: |
-          echo "IMAGE_TAG = ${{ secrets.DOCKERHUB_USERNAME }}/korva_vitrine:${{ github.sha }}"
-
       - name: Scan Trivy de l'image
         uses: aquasecurity/trivy-action@0.35.0
         continue-on-error: true
@@ -119,25 +115,10 @@ jobs:
       - name: Pull de la nouvelle image
         run: docker pull ${{ secrets.DOCKERHUB_USERNAME }}/korva_vitrine:${{ github.sha }}
 
-      - name: Générer le fichier .env
-        run: |
-          cat > .env << EOF
-          VITRINE_PORT=8085
-          VITRINE_DEV_PORT=5174
-
-          VITE_ALIBORA_URL=https://alibora.com/
-          VITE_KORVA_SOLUTION_URL=https://alibora.com/solutions/korva-accounting-software
-          VITE_SUPPORT_EMAIL=support@alibora.com
-          VITE_REGISTRATION_EMAIL=support@alibora.com
-
-          VITE_API_URL=${{ secrets.VITE_API_URL }}
-          VITE_VITRINE_API_TOKEN=${{ secrets.VITE_VITRINE_API_TOKEN }}
-          EOF
-
       - name: Déploiement avec Docker Compose
         run: |
           export IMAGE_TAG=${{ secrets.DOCKERHUB_USERNAME }}/korva_vitrine:${{ github.sha }}
-          docker compose -f docker-compose.yml -f docker-compose.app.yml up -d
+          docker compose -f docker-compose.yml up -d
 
       - name: Attente que le service soit prêt
         run: sleep 15
