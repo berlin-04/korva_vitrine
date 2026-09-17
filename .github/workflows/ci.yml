@@ -8,7 +8,7 @@ on:
 
 jobs:
   sast:
-    name: SAST (SonarQubeboss)
+    name: SAST (SonarQubebosskrist)
     runs-on: self-hosted
 
     steps:
